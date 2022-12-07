@@ -13,12 +13,12 @@ const initialValues = {
   to: "",
 };
 
-function App() {
-  const calcDate = (n = 6) => {
-    const newDate = Date.now() + -n * 24 * 3600 * 1000; // date 7 days ago in milliseconds UTC
-    return new Date(newDate).toJSON().slice(0, 10);
-  };
+const calcDate = (n = 6) => {
+  const newDate = Date.now() + -n * 24 * 3600 * 1000; // date 7 days ago in milliseconds UTC
+  return new Date(newDate).toJSON().slice(0, 10);
+};
 
+function App() {
   const [values, setValues] = useState(initialValues);
   const [result, setResult] = useState(0);
   const [rate, setRate] = useState(0);
@@ -27,9 +27,17 @@ function App() {
   const [min, setMin] = useState(0);
   const [max, setMax] = useState(0);
   const [avg, setAvg] = useState(0);
-  const url = "https://api.exchangerate.host/";
   const endDate = new Date().toJSON().slice(0, 10);
   const currentTime = new Date().toJSON().slice(11, 19);
+
+  let axiosInstance = axios.create({
+    baseURL: "https://api.exchangerate.host/",
+  });
+
+  const clearForm = () => {
+    setValues(initialValues);
+    setResult(0);
+  };
 
   useEffect(() => {
     getRange();
@@ -61,10 +69,9 @@ function App() {
       from ? from : values.from.toUpperCase(),
       to ? to : values.to.toUpperCase(),
     ];
-    await axios
+    await axiosInstance
       .get(
-        url +
-          `timeseries?start_date=${start_date}&end_date=${end_date}&base=${base}&symbols=${symbols}`
+        `timeseries?start_date=${start_date}&end_date=${end_date}&base=${base}&symbols=${symbols}`
       )
       .then((response) => {
         // handle success
@@ -88,12 +95,11 @@ function App() {
   };
 
   const getData = async () => {
-    await axios
+    await axiosInstance
       .get(
-        url +
-          `convert?from=${values.from.toUpperCase()}&to=${values.to.toUpperCase()}&amount=${
-            values.amount
-          }`
+        `convert?from=${values.from.toUpperCase()}&to=${values.to.toUpperCase()}&amount=${
+          values.amount
+        }`
       )
       .then((response) => {
         // handle success
@@ -124,10 +130,8 @@ function App() {
   };
 
   const getDataHistory = async (from, to, amount, eDate) => {
-    await axios
-      .get(
-        `${url}/convert?from=${from}&to=${to}&amount=${amount}&date=${eDate}`
-      )
+    await axiosInstance
+      .get(`convert?from=${from}&to=${to}&amount=${amount}&date=${eDate}`)
       .then((res) => {
         setResult(res.data.result);
         setRate(res.data.info.rate);
@@ -154,7 +158,7 @@ function App() {
   return (
     <div className="App">
       <Router>
-        <Menu />
+        <Menu clearForm={clearForm} />
         <Routes>
           <Route
             path="/"
